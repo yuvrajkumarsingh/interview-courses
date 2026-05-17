@@ -1,61 +1,57 @@
-// Footer rendered at the bottom of every lesson page.
-// Links are grouped into the same four columns as the real site.
-
 import Link from 'next/link';
 
-const FOOTER_LINKS = [
+const COLS = [
   {
     heading: 'Partner With Us',
-    links: [
-      { label: 'Teach on ByteByteGo', href: '#' },
-      { label: 'Be an Affiliate', href: '#' },
-      { label: 'Become a Contributor', href: '#' },
-    ],
+    links: ['Teach on ByteByteGo', 'Be an Affiliate', 'Become a Contributor'],
   },
   {
     heading: 'Support',
-    links: [
-      { label: 'hi@bytebytego.com', href: 'mailto:hi@bytebytego.com' },
-      { label: 'Report a Bug', href: '#' },
-    ],
+    links: ['hi@bytebytego.com', 'Report a Bug'],
   },
   {
     heading: 'Company & Legal',
-    links: [
-      { label: 'Our Team', href: '#' },
-      { label: 'Newsletter', href: '#' },
-      { label: 'Privacy Policy', href: '#' },
-      { label: 'Terms of Service', href: '#' },
-    ],
+    links: ['Our Team', 'Newsletter', 'Privacy Policy', 'Terms of Service'],
   },
   {
     heading: 'Resources',
-    links: [
-      { label: 'YouTube', href: '#' },
-      { label: 'Visual Dev Guides', href: '#' },
-      { label: 'Find Jobs', href: '#' },
-      { label: 'Prepare for Coding Interviews', href: '#' },
-    ],
+    links: ['YouTube', 'Visual Dev Guides', 'Find Jobs', 'Coding Interview Prep'],
   },
 ];
 
 export default function CourseFooter() {
   return (
-    <footer className="mt-16 pt-10 border-t border-gray-200">
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-8 mb-10">
-        {FOOTER_LINKS.map(section => (
-          <div key={section.heading}>
-            <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wider mb-3">
-              {section.heading}
+    <footer style={{ marginTop: 48, paddingTop: 32, borderTop: '1px solid var(--border)' }}>
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(4, 1fr)',
+        gap: 28,
+        marginBottom: 36,
+      }}
+        className="footer-grid"
+      >
+        {COLS.map(col => (
+          <div key={col.heading}>
+            <h4 style={{
+              fontSize: 11, fontWeight: 900,
+              textTransform: 'uppercase',
+              letterSpacing: '0.09em',
+              color: 'var(--text)',
+              marginBottom: 14,
+            }}>
+              {col.heading}
             </h4>
-            <ul className="space-y-2">
-              {section.links.map(link => (
-                <li key={link.label}>
+            <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 9 }}>
+              {col.links.map(label => (
+                <li key={label}>
                   <Link
-                    href={link.href}
-                    className="text-sm text-gray-500 hover:text-brand-600 transition-colors"
+                    href="#"
+                    style={{
+                      fontSize: 13, color: 'var(--muted)', fontWeight: 600,
+                      transition: 'color var(--transition)',
+                    }}
                   >
-                    {link.label}
+                    {label}
                   </Link>
                 </li>
               ))}
@@ -63,8 +59,10 @@ export default function CourseFooter() {
           </div>
         ))}
       </div>
-
-      <p className="text-xs text-gray-400 text-center pb-8">
+      <p style={{
+        textAlign: 'center', fontSize: 12,
+        color: 'var(--muted)', paddingBottom: 24,
+      }}>
         Copyright ©2022–2026 ByteByteGo Inc. All rights reserved.
       </p>
     </footer>

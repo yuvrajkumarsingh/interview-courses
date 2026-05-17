@@ -1,28 +1,29 @@
-// Root layout — sets the HTML shell. All pages inherit from this.
-// Sidebar is NOT here; it lives in the courses/[course]/layout.tsx so
-// it only mounts when the user is inside a course.
-
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
+import { ThemeProvider } from '@/components/providers/ThemeProvider';
 
-// Page metadata — title, description, social sharing, etc.
 export const metadata: Metadata = {
   title: 'ByteByteGo | Technical Interview Prep',
   description: 'Ace Every Stage of Your Next Technical Interview',
 };
 
-// Viewport settings are now a SEPARATE export in Next.js 14+.
-// themeColor, width, initialScale all live here instead of in metadata.
 export const viewport: Viewport = {
-  themeColor: '#ffffff',
   width: 'device-width',
   initialScale: 1,
+  themeColor: '#ffffff',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        {/*
+          ThemeProvider is a client component that reads localStorage + system pref on
+          mount and toggles the `dark` class on <html>. It must wrap the full tree so
+          any component can call useTheme().
+        */}
+        <ThemeProvider>{children}</ThemeProvider>
+      </body>
     </html>
   );
 }

@@ -1,45 +1,46 @@
-// Pure presentational component that turns a ContentBlock[] array into
-// styled JSX. No state — just a clean render pipeline.
-
 import { ContentBlock } from '@/types';
 import CodeBlock from './CodeBlock';
-import { cn } from '@/lib/utils';
 
-interface LessonRendererProps {
-  content: ContentBlock[];
-}
-
-export default function LessonRenderer({ content }: LessonRendererProps) {
+export default function LessonRenderer({ content }: { content: ContentBlock[] }) {
   return (
-    <article className="prose-content space-y-5">
-      {content.map((block, i) => (
-        <Block key={i} block={block} />
-      ))}
+    <article className="prose-content" style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+      {content.map((block, i) => <Block key={i} block={block} />)}
     </article>
   );
 }
 
 function Block({ block }: { block: ContentBlock }) {
   switch (block.type) {
-
     case 'h2':
       return (
-        <h2 className="text-xl font-bold text-gray-900 mt-10 mb-4 first:mt-0">
-          <InlineMarkdown text={block.text ?? ''} />
+        <h2 style={{
+          fontSize: 20, fontWeight: 800,
+          letterSpacing: '-0.04em',
+          color: 'var(--text)',
+          marginTop: 24, marginBottom: 4,
+          paddingBottom: 10,
+          borderBottom: '1px solid var(--border)',
+        }}>
+          <InlineMd text={block.text ?? ''} />
         </h2>
       );
 
     case 'h3':
       return (
-        <h3 className="text-base font-semibold text-gray-900 mt-6 mb-3">
-          <InlineMarkdown text={block.text ?? ''} />
+        <h3 style={{
+          fontSize: 15.5, fontWeight: 700,
+          letterSpacing: '-0.02em',
+          color: 'var(--text)',
+          marginTop: 12,
+        }}>
+          <InlineMd text={block.text ?? ''} />
         </h3>
       );
 
     case 'paragraph':
       return (
-        <p className="text-[15px] leading-7 text-gray-700">
-          <InlineMarkdown text={block.text ?? ''} />
+        <p style={{ fontSize: 15, lineHeight: 1.75, color: 'var(--muted)', fontWeight: 500 }}>
+          <InlineMd text={block.text ?? ''} />
         </p>
       );
 
@@ -48,64 +49,74 @@ function Block({ block }: { block: ContentBlock }) {
 
     case 'image':
       return (
-        <figure className="my-6">
-          {/* Using <img> directly for SVG compatibility — Next/Image doesn't
-              support externally-hosted SVGs without special config */}
+        <figure style={{ margin: '24px 0', textAlign: 'center' }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={block.src}
             alt={block.alt ?? ''}
-            className="lesson-image w-full max-w-2xl mx-auto block"
             loading="lazy"
+            style={{
+              display: 'block',
+              margin: '0 auto',
+              width: '100%',
+              maxWidth: 580,
+              height: 'auto',
+              borderRadius: 14,
+              border: '1px solid var(--border)',
+              background: '#ffffff',     // SVGs need white bg in dark mode
+              padding: '12px',
+            }}
           />
           {block.caption && (
-            <figcaption className="text-center text-xs text-gray-500 mt-2">
+            <figcaption style={{
+              textAlign: 'center', fontSize: 12,
+              color: 'var(--muted)', marginTop: 10,
+              fontStyle: 'italic',
+            }}>
               {block.caption}
             </figcaption>
           )}
         </figure>
       );
 
-    case 'callout':
+    case 'callout': {
+      const colors = {
+        warning: { border: 'var(--warning)', bg: 'rgba(255,184,77,0.08)', text: '#b8860b' },
+        tip:     { border: 'var(--accent)',  bg: 'rgba(24,199,161,0.08)',  text: '#0e8a70' },
+        info:    { border: 'var(--primary)', bg: 'rgba(109,93,252,0.07)', text: 'var(--primary)' },
+      };
+      const c = colors[block.variant ?? 'info'];
       return (
-        <div
-          className={cn(
-            'rounded-xl border-l-4 p-4 my-5 text-sm leading-7',
-            block.variant === 'warning' && 'border-yellow-400 bg-yellow-50 text-yellow-900',
-            block.variant === 'tip'     && 'border-green-400 bg-green-50 text-green-900',
-            (!block.variant || block.variant === 'info')
-              && 'border-brand-400 bg-brand-50 text-brand-900',
-          )}
-        >
-          <InlineMarkdown text={block.text ?? ''} />
+        <div style={{
+          borderLeft: `4px solid ${c.border}`,
+          background: c.bg,
+          borderRadius: '0 14px 14px 0',
+          padding: '14px 18px',
+          fontSize: 14, lineHeight: 1.7,
+          color: 'var(--muted)',
+        }}>
+          <InlineMd text={block.text ?? ''} />
         </div>
       );
+    }
 
     case 'divider':
-      return <hr className="border-gray-200 my-8" />;
+      return <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '8px 0' }} />;
 
     default:
       return null;
   }
 }
 
-// ─── Inline markdown parser ────────────────────────────────────────────────────
-// Supports **bold** and `code` without pulling in a full markdown library.
-// For production use, consider remark/rehype or react-markdown.
-
-function InlineMarkdown({ text }: { text: string }) {
-  // Split on **bold** and `code` patterns
-  const parts = text.split(/(\*\*[^*]+\*\*|`[^`]+`)/g);
-
+/* ─── Inline markdown: **bold** and `code` ───────────────────────────────── */
+function InlineMd({ text }: { text: string }) {
   return (
     <>
-      {parts.map((part, i) => {
-        if (part.startsWith('**') && part.endsWith('**')) {
+      {text.split(/(\*\*[^*]+\*\*|`[^`]+`)/g).map((part, i) => {
+        if (part.startsWith('**') && part.endsWith('**'))
           return <strong key={i}>{part.slice(2, -2)}</strong>;
-        }
-        if (part.startsWith('`') && part.endsWith('`')) {
+        if (part.startsWith('`') && part.endsWith('`'))
           return <code key={i}>{part.slice(1, -1)}</code>;
-        }
         return <span key={i}>{part}</span>;
       })}
     </>

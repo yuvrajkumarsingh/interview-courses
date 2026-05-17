@@ -1,11 +1,7 @@
 'use client';
-// Client component: needs useState for chapter expand/collapse and
-// usePathname to highlight the active lesson.
-
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import Image from 'next/image';
 import { ChevronDown, CheckCircle2 } from 'lucide-react';
 import { Course, Chapter } from '@/types';
 import { cn } from '@/lib/utils';
@@ -13,196 +9,283 @@ import ProgressBar from '@/components/ui/ProgressBar';
 
 interface SidebarProps {
   course: Course;
-  onLinkClick?: () => void; // called by MobileDrawer to close on navigation
+  collapsed: boolean;
+  mobileOpen: boolean;
+  onToggleCollapse: () => void;
+  onCloseMobile: () => void;
 }
 
-export default function Sidebar({ course, onLinkClick }: SidebarProps) {
+export default function Sidebar({
+  course, collapsed, mobileOpen, onToggleCollapse, onCloseMobile,
+}: SidebarProps) {
   const pathname = usePathname();
+  const activeChapter = pathname.split('/')[3] ?? '';
+  const activeLesson  = pathname.split('/')[4] ?? '';
 
-  // Derive the currently active chapter from the URL so we can auto-expand it.
-  const activeChapterSlug = pathname.split('/')[3]; // /courses/:course/:chapter/:lesson
-  const activeLessonSlug  = pathname.split('/')[4];
-
-  // Build initial expanded state: expand the active chapter by default.
-  const [expandedChapters, setExpandedChapters] = useState<Record<string, boolean>>(() => {
-    const initial: Record<string, boolean> = {};
-    course.chapters.forEach(ch => {
-      initial[ch.slug] = ch.slug === activeChapterSlug;
-    });
-    return initial;
+  const [expanded, setExpanded] = useState<Record<string, boolean>>(() => {
+    const init: Record<string, boolean> = {};
+    course.chapters.forEach(ch => { init[ch.slug] = ch.slug === activeChapter; });
+    return init;
   });
 
-  // When the route changes (user navigates), auto-expand the newly active chapter.
+  // Auto-expand the newly active chapter on route change
   useEffect(() => {
-    setExpandedChapters(prev => ({
-      ...prev,
-      [activeChapterSlug]: true,
-    }));
-  }, [activeChapterSlug]);
+    setExpanded(prev => ({ ...prev, [activeChapter]: true }));
+  }, [activeChapter]);
 
   function toggleChapter(slug: string) {
-    setExpandedChapters(prev => ({ ...prev, [slug]: !prev[slug] }));
+    // If sidebar is collapsed, expanding it takes priority
+    if (collapsed) { onToggleCollapse(); return; }
+    setExpanded(prev => ({ ...prev, [slug]: !prev[slug] }));
   }
 
   const progress = Math.round((course.completedLessons / course.totalLessons) * 100);
 
   return (
-    // Full-height sidebar with its own scroll — independent of the main content.
-    <div className="flex flex-col h-full bg-white border-r border-gray-200 sidebar-scroll overflow-y-auto">
-
-      {/* ── Logo ────────────────────────────────────────────────────────── */}
-      <div className="flex-shrink-0 px-5 pt-5 pb-4 border-b border-gray-100">
-        <Link href="/" className="flex items-center gap-2 group">
-          {/* Inline SVG logo mark (orange hexagon-ish shape) */}
-          <svg
-            width="32" height="32" viewBox="0 0 32 32" fill="none"
-            className="flex-shrink-0"
-            aria-hidden="true"
-          >
-            <rect width="32" height="32" rx="8" fill="#FF6B2B" />
-            <path
-              d="M8 10h7l5 6-5 6H8l5-6-5-6zm9 0h7l-5 6 5 6h-7l-5-6 5-6z"
-              fill="white"
-              fillOpacity="0.9"
-            />
-          </svg>
-          <span className="font-bold text-gray-900 text-base tracking-tight">
-            ByteByteGo
-          </span>
+    <aside
+      className={cn(
+        'sidebar-floating',
+        collapsed   && 'is-collapsed',
+        mobileOpen  && 'mobile-open',
+      )}
+      aria-label="Course navigation"
+    >
+      {/* ── Brand header ────────────────────────────────────────────────── */}
+      <div style={{
+        height: 76,
+        display: 'flex',
+        alignItems: 'center',
+        gap: 12,
+        padding: '0 16px',
+        flexShrink: 0,
+        borderBottom: '1px solid var(--border)',
+      }}>
+        {/* Gradient logo mark */}
+        <Link
+          href="/"
+          aria-label="ByteByteGo home"
+          style={{
+            width: 44, height: 44,
+            borderRadius: 15,
+            background: 'linear-gradient(135deg, var(--primary), var(--accent))',
+            boxShadow: 'var(--shadow-primary)',
+            display: 'grid',
+            placeItems: 'center',
+            color: '#fff',
+            fontWeight: 900,
+            fontSize: 22,
+            flexShrink: 0,
+          }}
+        >
+          B
         </Link>
+
+        {/* Brand text — hidden when collapsed */}
+        {!collapsed && (
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{
+              fontWeight: 800, fontSize: 16.5,
+              letterSpacing: '-0.03em', color: 'var(--text)',
+              whiteSpace: 'nowrap',
+            }}>
+              ByteByteGo
+            </div>
+            <div style={{
+              color: 'var(--muted)', fontSize: 12, fontWeight: 600,
+              whiteSpace: 'nowrap',
+            }}>
+              Interview Prep
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* ── Course title + progress ─────────────────────────────────────── */}
-      <div className="flex-shrink-0 px-5 py-4 border-b border-gray-100">
-        <h2 className="text-sm font-semibold text-gray-900 leading-snug mb-3">
-          {course.title}
-        </h2>
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-xs text-gray-500 font-medium">
-            {course.completedLessons}/{course.totalLessons} completed
-          </span>
-          <span className="text-xs font-semibold text-brand-500">
-            {progress}%
-          </span>
+      {/* ── Progress section ─────────────────────────────────────────────── */}
+      {!collapsed && (
+        <div style={{
+          padding: '14px 18px',
+          borderBottom: '1px solid var(--border)',
+          flexShrink: 0,
+        }}>
+          <div style={{
+            fontSize: 12.5, fontWeight: 700,
+            color: 'var(--text)', marginBottom: 8,
+            whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+          }}>
+            {course.title}
+          </div>
+          <div style={{
+            display: 'flex', justifyContent: 'space-between',
+            marginBottom: 8, fontSize: 12, fontWeight: 700,
+          }}>
+            <span style={{ color: 'var(--muted)' }}>
+              {course.completedLessons}/{course.totalLessons} completed
+            </span>
+            <span style={{ color: 'var(--primary)' }}>{progress}%</span>
+          </div>
+          <ProgressBar value={progress} />
         </div>
-        <ProgressBar value={progress} />
-      </div>
+      )}
 
-      {/* ── Chapter list ────────────────────────────────────────────────── */}
-      <nav className="flex-1 py-2" aria-label="Course chapters">
+      {/* ── Chapter list ─────────────────────────────────────────────────── */}
+      <nav
+        className="sidebar-scroll"
+        style={{ flex: 1, padding: '10px 10px', overflowY: 'auto' }}
+        aria-label="Course chapters"
+      >
         {course.chapters.map(chapter => (
-          <ChapterSection
+          <ChapterRow
             key={chapter.slug}
             chapter={chapter}
             courseSlug={course.slug}
-            isExpanded={!!expandedChapters[chapter.slug]}
-            isActive={chapter.slug === activeChapterSlug}
-            activeLessonSlug={activeLessonSlug}
+            isExpanded={!!expanded[chapter.slug] && !collapsed}
+            isActive={chapter.slug === activeChapter}
+            activeLesson={activeLesson}
+            collapsed={collapsed}
             onToggle={() => toggleChapter(chapter.slug)}
-            onLinkClick={onLinkClick}
+            onLinkClick={onCloseMobile}
           />
         ))}
       </nav>
-    </div>
+    </aside>
   );
 }
 
-// ─── ChapterSection ────────────────────────────────────────────────────────────
-// Isolated accordion row for each chapter. Extracted here to keep Sidebar clean.
+/* ─── ChapterRow ─────────────────────────────────────────────────────────── */
 
-interface ChapterSectionProps {
+interface ChapterRowProps {
   chapter: Chapter;
   courseSlug: string;
   isExpanded: boolean;
   isActive: boolean;
-  activeLessonSlug: string;
+  activeLesson: string;
+  collapsed: boolean;
   onToggle: () => void;
-  onLinkClick?: () => void;
+  onLinkClick: () => void;
 }
 
-function ChapterSection({
-  chapter, courseSlug, isExpanded, isActive, activeLessonSlug, onToggle, onLinkClick,
-}: ChapterSectionProps) {
-  const completedCount = chapter.lessons.filter(l => l.completed).length;
-
+function ChapterRow({
+  chapter, courseSlug, isExpanded, isActive,
+  activeLesson, collapsed, onToggle, onLinkClick,
+}: ChapterRowProps) {
   return (
-    <div>
-      {/* Chapter header button */}
+    <div style={{ marginBottom: 3 }}>
+      {/* Chapter header */}
       <button
         onClick={onToggle}
-        className={cn(
-          'w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors',
-          'hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500',
-          isActive && 'bg-brand-50',
-        )}
         aria-expanded={isExpanded}
+        style={{
+          width: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          gap: collapsed ? 0 : 10,
+          justifyContent: collapsed ? 'center' : 'flex-start',
+          minHeight: 44,
+          padding: collapsed ? '0 8px' : '0 12px',
+          borderRadius: 16,
+          cursor: 'pointer',
+          transition: 'all var(--transition)',
+          // Active chapter gets the full gradient treatment
+          background: isActive
+            ? 'linear-gradient(135deg, var(--primary), var(--primary-2))'
+            : 'transparent',
+          color: isActive ? '#fff' : 'var(--text)',
+          boxShadow: isActive ? 'var(--shadow-primary)' : 'none',
+        }}
       >
         {/* Number badge */}
-        <span
-          className={cn(
-            'flex-shrink-0 inline-flex items-center justify-center w-6 h-6 rounded text-xs font-bold',
-            isActive
-              ? 'bg-brand-500 text-white'
-              : 'bg-gray-100 text-gray-600',
-          )}
-        >
+        <span style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          width: 28, height: 28,
+          borderRadius: 9,
+          fontSize: 11,
+          fontWeight: 900,
+          flexShrink: 0,
+          background: isActive ? 'rgba(255,255,255,0.20)' : 'rgba(109,93,252,0.11)',
+          color: isActive ? '#fff' : 'var(--primary)',
+        }}>
           {chapter.number}
         </span>
 
-        {/* Chapter title */}
-        <span
-          className={cn(
-            'flex-1 text-sm font-medium leading-snug',
-            isActive ? 'text-brand-600' : 'text-gray-700',
-          )}
-        >
-          {chapter.title}
-        </span>
-
-        {/* Expand chevron */}
-        <ChevronDown
-          size={15}
-          className={cn(
-            'flex-shrink-0 text-gray-400 transition-transform duration-200',
-            isExpanded && 'rotate-180',
-          )}
-        />
+        {!collapsed && (
+          <>
+            <span style={{
+              flex: 1, textAlign: 'left',
+              fontSize: 13.5, fontWeight: 700,
+              letterSpacing: '-0.01em',
+              color: isActive ? '#fff' : 'var(--text)',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+            }}>
+              {chapter.title}
+            </span>
+            <ChevronDown
+              size={14}
+              style={{
+                flexShrink: 0,
+                color: isActive ? 'rgba(255,255,255,0.75)' : 'var(--muted)',
+                transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
+                transition: 'transform var(--transition)',
+              }}
+            />
+          </>
+        )}
       </button>
 
-      {/* Lesson list — animated open/close */}
+      {/* Lesson list */}
       {isExpanded && chapter.lessons.length > 0 && (
-        <ul className="pb-1">
+        <ul style={{ listStyle: 'none', padding: 0, marginTop: 2 }}>
           {chapter.lessons.map(lesson => {
             const href = `/courses/${courseSlug}/${chapter.slug}/${lesson.slug}`;
-            const isLessonActive = lesson.slug === activeLessonSlug;
+            const isLessonActive = lesson.slug === activeLesson;
 
             return (
               <li key={lesson.slug}>
                 <Link
                   href={href}
                   onClick={onLinkClick}
-                  className={cn(
-                    'flex items-center gap-3 pl-11 pr-4 py-2 text-sm transition-colors',
-                    'hover:bg-gray-50',
-                    isLessonActive
-                      ? 'text-brand-600 font-medium bg-brand-50 border-r-2 border-brand-500'
-                      : 'text-gray-600',
-                  )}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 10,
+                    padding: '8px 12px 8px 12px',
+                    marginLeft: 8,
+                    borderRadius: 12,
+                    fontSize: 13,
+                    fontWeight: isLessonActive ? 700 : 600,
+                    color: isLessonActive ? 'var(--primary)' : 'var(--muted)',
+                    background: isLessonActive
+                      ? 'rgba(109, 93, 252, 0.08)'
+                      : 'transparent',
+                    borderLeft: `3px solid ${isLessonActive ? 'var(--primary)' : 'transparent'}`,
+                    transition: 'all var(--transition)',
+                  }}
                 >
-                  {/* Completion icon or dot */}
                   {lesson.completed ? (
-                    <CheckCircle2 size={14} className="flex-shrink-0 text-brand-500" />
-                  ) : (
-                    <span
-                      className={cn(
-                        'flex-shrink-0 w-3.5 h-3.5 rounded-full border-2',
-                        isLessonActive
-                          ? 'border-brand-500 bg-brand-100'
-                          : 'border-gray-300',
-                      )}
+                    <CheckCircle2
+                      size={14}
+                      style={{ flexShrink: 0, color: 'var(--accent)' }}
                     />
+                  ) : (
+                    <span style={{
+                      width: 14, height: 14,
+                      borderRadius: '50%',
+                      border: `2px solid ${isLessonActive ? 'var(--primary)' : 'var(--border)'}`,
+                      flexShrink: 0,
+                      background: isLessonActive ? 'rgba(109,93,252,0.12)' : 'transparent',
+                    }} />
                   )}
-                  <span className="leading-snug">{lesson.title}</span>
+                  <span style={{
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                    lineHeight: 1.35,
+                  }}>
+                    {lesson.title}
+                  </span>
                 </Link>
               </li>
             );
