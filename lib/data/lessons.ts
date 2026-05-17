@@ -18,20 +18,12 @@ export const introToTwoPointers: LessonPageData = {
       type: 'paragraph',
       text: 'As the name implies, a two-pointer pattern refers to an algorithm that utilizes two pointers. A **pointer** is a variable that represents an index or position within a data structure, like an array or linked list. Many algorithms use just a single pointer to track a single element:',
     },
-    {
-      type: 'image',
-      src: 'https://bytebytego.com/images/courses/coding-patterns/two-pointers/introduction-to-two-pointers/image-01-00-1-OA7SGCBK.svg',
-      alt: 'A single pointer i pointing to an element in an array [... 14 5 5 20 ...]',
-    },
+    { type: 'diagram', diagramId: 'two-ptr-single' },
     {
       type: 'paragraph',
       text: 'Introducing a second pointer opens a new world of possibilities. Most importantly, we can now make **comparisons**. With pointers at two different positions, we can compare the elements at those positions and make decisions based on the comparison:',
     },
-    {
-      type: 'image',
-      src: 'https://bytebytego.com/images/courses/coding-patterns/two-pointers/introduction-to-two-pointers/image-01-00-2-Y7CSNC5F.svg',
-      alt: 'Two pointers i and j comparing elements 14 and 5 in an array, leading to a decision',
-    },
+    { type: 'diagram', diagramId: 'two-ptr-comparison' },
     {
       type: 'paragraph',
       text: 'In many cases, such comparisons are made using two nested for-loops, which takes O(n²) time, where `n` denotes the length of the data structure. In the code snippet below, `i` and `j` are two pointers used to compare every two elements of an array:',
@@ -75,11 +67,7 @@ export const introToTwoPointers: LessonPageData = {
       type: 'paragraph',
       text: 'Often, this approach does not take advantage of **predictable dynamics** that might exist in a data structure. An example is a sorted array: when we move a pointer in a sorted array, we can predict whether the value being moved to is greater or smaller. Moving a pointer right in an ascending array guarantees we move to a value ≥ the current one:',
     },
-    {
-      type: 'image',
-      src: 'https://bytebytego.com/images/courses/coding-patterns/two-pointers/introduction-to-two-pointers/image-01-00-3-ASETSKFQ.svg',
-      alt: 'Sorted array [1 2 3 4] with pointer i and the prediction: if nums[i] == 2 then nums[i+1] >= 2',
-    },
+    { type: 'diagram', diagramId: 'two-ptr-sorted' },
     {
       type: 'paragraph',
       text: 'Data structures with predictable dynamics let us move pointers in a logical, informed way. Taking advantage of this predictability can lead to improved time and space complexity.',
@@ -96,11 +84,7 @@ export const introToTwoPointers: LessonPageData = {
       type: 'paragraph',
       text: 'This approach has pointers starting at opposite ends of the data structure and moving inward toward each other:',
     },
-    {
-      type: 'image',
-      src: 'https://bytebytego.com/images/courses/coding-patterns/two-pointers/introduction-to-two-pointers/image-01-00-4-SFTU7WGJ.svg',
-      alt: 'Two pointers labeled left and right starting at opposite ends of an array, converging toward the center',
-    },
+    { type: 'diagram', diagramId: 'two-ptr-inward' },
     {
       type: 'paragraph',
       text: 'The pointers move toward the center, adjusting based on comparisons, until a condition is met or they meet/cross. This is ideal for problems where we need to compare elements from different ends of a data structure.',
@@ -111,9 +95,8 @@ export const introToTwoPointers: LessonPageData = {
       text: 'Both pointers start at the same end (usually the beginning) and move in the same direction:',
     },
     {
-      type: 'image',
-      src: 'https://bytebytego.com/images/courses/coding-patterns/two-pointers/introduction-to-two-pointers/image-01-00-5-2KI3FUD6.svg',
-      alt: 'Two pointers left and right moving in the same direction through an array',
+      type: 'diagram',
+      diagramId: 'two-ptr-unidirect'
     },
     {
       type: 'paragraph',
@@ -124,11 +107,7 @@ export const introToTwoPointers: LessonPageData = {
       type: 'paragraph',
       text: 'We traverse with one pointer, and when it lands on an element meeting a certain condition, we traverse with the second pointer:',
     },
-    {
-      type: 'image',
-      src: 'https://bytebytego.com/images/courses/coding-patterns/two-pointers/introduction-to-two-pointers/image-01-00-6-ZAL5SSYK.svg',
-      alt: 'Staged traversal — first pointer scans and when a condition is met, the second pointer activates',
-    },
+    { type: 'diagram', diagramId: 'two-ptr-staged' },
     {
       type: 'paragraph',
       text: 'Similar to unidirectional traversal, both pointers serve different purposes. The first pointer searches for something, and once found, the second pointer finds additional information at that position.',
@@ -155,11 +134,7 @@ export const introToTwoPointers: LessonPageData = {
 
     // ── Section 5 ──────────────────────────────────────────────────────────────
     { type: 'h2', text: 'Chapter Outline' },
-    {
-      type: 'image',
-      src: 'https://bytebytego.com/images/courses/coding-patterns/two-pointers/introduction-to-two-pointers/image-01-00-7-3JHPFTNV.svg',
-      alt: 'Chapter outline diagram: Two Pointers branches into Inward Traversal, Unidirectional Traversal, and Staged Traversal sub-problems',
-    },
+    { type: 'diagram', diagramId: 'two-ptr-outline' },
     {
       type: 'paragraph',
       text: 'The two-pointer pattern is very versatile and broad. We cover specialized variants such as **Fast and Slow Pointers** and **Sliding Windows** in separate chapters.',

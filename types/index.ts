@@ -7,6 +7,7 @@ export type ContentBlockType =
   | 'paragraph'
   | 'code'
   | 'image'
+  | 'diagram'
   | 'callout'
   | 'divider';
 
@@ -27,6 +28,8 @@ export interface ContentBlock {
   caption?: string;
   // For callouts
   variant?: 'info' | 'warning' | 'tip';
+  // For diagrams
+  diagramId?: string;
 }
 
 // ─── Course Data ───────────────────────────────────────────────────────────────

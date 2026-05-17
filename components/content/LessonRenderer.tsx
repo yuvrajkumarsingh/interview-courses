@@ -1,5 +1,6 @@
 import { ContentBlock } from '@/types';
 import CodeBlock from './CodeBlock';
+import { DIAGRAMS } from '@/components/diagrams';
 
 export default function LessonRenderer({ content }: { content: ContentBlock[] }) {
   return (
@@ -79,6 +80,35 @@ function Block({ block }: { block: ContentBlock }) {
         </figure>
       );
 
+    case 'diagram': {
+        const DiagramComp = DIAGRAMS[block.diagramId ?? ''];
+        if (!DiagramComp) return null;
+        return (
+          <figure style={{
+            margin: '28px auto',
+            maxWidth: 560,          // matches image max-width — keeps diagrams readable
+            padding: '20px',
+            borderRadius: 16,
+            background: 'rgba(109,93,252,0.04)',   // ultra-subtle tinted surface
+            border: '1px solid var(--border)',
+          }}>
+            <DiagramComp />
+            {block.caption && (
+              <figcaption style={{
+                textAlign: 'center',
+                fontSize: 12,
+                color: 'var(--muted)',
+                marginTop: 10,
+                fontStyle: 'italic',
+                fontFamily: 'Inter, sans-serif',
+              }}>
+                {block.caption}
+              </figcaption>
+            )}
+          </figure>
+        );
+    }
+    
     case 'callout': {
       const colors = {
         warning: { border: 'var(--warning)', bg: 'rgba(255,184,77,0.08)', text: '#b8860b' },
