@@ -6,9 +6,12 @@ export type ContentBlockType =
   | 'h1' | 'h2' | 'h3'
   | 'paragraph'
   | 'code'
+  | 'example'
   | 'image'
   | 'diagram'
   | 'callout'
+  | 'list'
+  | 'table'
   | 'divider';
 
 export interface CodeTab {
@@ -22,6 +25,8 @@ export interface ContentBlock {
   text?: string;
   // For code blocks — first tab is shown by default
   tabs?: CodeTab[];
+  // For examples — rendered as a static, non-runnable sample box
+  lines?: string[];
   // For images
   src?: string;
   alt?: string;
@@ -30,6 +35,13 @@ export interface ContentBlock {
   variant?: 'info' | 'warning' | 'tip';
   // For diagrams
   diagramId?: string;
+  // For lists
+  items?: string[];
+  // For tables
+  table?: {
+    headers: string[];
+    rows: string[][];
+  };
 }
 
 // ─── Course Data ───────────────────────────────────────────────────────────────

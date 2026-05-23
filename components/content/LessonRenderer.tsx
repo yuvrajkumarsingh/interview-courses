@@ -40,13 +40,36 @@ function Block({ block }: { block: ContentBlock }) {
 
     case 'paragraph':
       return (
-        <p style={{ fontSize: 15, lineHeight: 1.75, color: 'var(--muted)', fontWeight: 500 }}>
+        <p style={{ fontSize: 15.5, lineHeight: 1.8, color: 'var(--prose)', fontWeight: 500 }}>
           <InlineMd text={block.text ?? ''} />
         </p>
       );
 
     case 'code':
       return <CodeBlock tabs={block.tabs ?? []} />;
+
+    case 'example':
+      return (
+        <div style={{
+          border: '1px solid var(--border)',
+          borderRadius: 12,
+          background: 'var(--example-bg)',
+          padding: '20px 24px',
+          margin: '2px 0 6px',
+        }}>
+          <pre style={{
+            margin: 0,
+            whiteSpace: 'pre-wrap',
+            color: 'var(--example-text)',
+            fontFamily: "'JetBrains Mono', Consolas, ui-monospace, monospace",
+            fontSize: 14.5,
+            lineHeight: 1.75,
+            fontWeight: 700,
+          }}>
+            {(block.lines ?? []).join('\n')}
+          </pre>
+        </div>
+      );
 
     case 'image':
       return (
@@ -82,16 +105,20 @@ function Block({ block }: { block: ContentBlock }) {
 
     case 'diagram': {
       const DiagramComp = DIAGRAMS[block.diagramId ?? ''];
+      const width = getDiagramWidth(block.diagramId);
       if (!DiagramComp) return null;
       return (
-        /*
-          No maxWidth constraint — let the diagram fill the glass card width.
-          The SVG viewBox handles internal proportions; the wider it renders,
-          the larger and more readable all text + arrows become automatically.
-          No tinted background — diagrams sit directly on the card surface.
-        */
-        <figure style={{ margin: '28px 0', padding: '4px 0' }}>
-          <DiagramComp />
+        <figure
+          style={{
+            margin: '16px auto 18px',
+            padding: '2px 0',
+            width: '100%',
+            maxWidth: width,
+          }}
+        >
+          <div style={{ width: '100%', margin: '0 auto' }}>
+            <DiagramComp />
+          </div>
           {block.caption && (
             <figcaption style={{
               textAlign: 'center',
@@ -129,11 +156,116 @@ function Block({ block }: { block: ContentBlock }) {
       );
     }
 
+    case 'list':
+      return (
+        <ul style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 8,
+          paddingLeft: 22,
+          color: 'var(--prose)',
+          fontSize: 15.5,
+          lineHeight: 1.7,
+          fontWeight: 500,
+        }}>
+          {(block.items ?? []).map((item, i) => (
+            <li key={i}>
+              <InlineMd text={item} />
+            </li>
+          ))}
+        </ul>
+      );
+
+    case 'table':
+      return (
+        <div style={{
+          overflowX: 'auto',
+          border: '1px solid var(--border)',
+          borderRadius: 12,
+          background: 'var(--surface-solid)',
+          marginTop: 2,
+        }}>
+          <table style={{
+            width: '100%',
+            borderCollapse: 'collapse',
+            minWidth: 620,
+            fontSize: 13.5,
+            color: 'var(--text)',
+          }}>
+            <thead>
+              <tr>
+                {(block.table?.headers ?? []).map(header => (
+                  <th
+                    key={header}
+                    style={{
+                      textAlign: 'left',
+                      padding: '13px 15px',
+                      borderBottom: '1px solid var(--border)',
+                      background: 'rgba(127,139,164,0.08)',
+                      fontWeight: 800,
+                    }}
+                  >
+                    {header}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {(block.table?.rows ?? []).map((row, rowIndex) => (
+                <tr key={rowIndex}>
+                  {row.map((cell, cellIndex) => (
+                    <td
+                      key={`${rowIndex}-${cellIndex}`}
+                      style={{
+                        padding: '12px 15px',
+                        borderBottom: rowIndex === (block.table?.rows.length ?? 0) - 1
+                          ? 'none'
+                          : '1px solid var(--border)',
+                        color: cellIndex === 2 ? 'var(--muted)' : 'var(--text)',
+                        lineHeight: 1.55,
+                        verticalAlign: 'top',
+                      }}
+                    >
+                      <InlineMd text={cell} />
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      );
+
     case 'divider':
       return <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '8px 0' }} />;
 
     default:
       return null;
+  }
+}
+
+function getDiagramWidth(diagramId?: string) {
+  switch (diagramId) {
+    case 'pair-sum-start':
+    case 'pair-sum-left':
+    case 'pair-sum-left-again':
+    case 'pair-sum-right':
+    case 'pair-sum-found':
+      return 575;
+    case 'two-ptr-comparison':
+      return 660;
+    case 'two-ptr-outline':
+      return 540;
+    case 'two-ptr-inward':
+    case 'two-ptr-unidirect':
+      return 560;
+    case 'two-ptr-staged':
+      return 520;
+    case 'two-ptr-single':
+      return 430;
+    case 'two-ptr-sorted':
+    default:
+      return 480;
   }
 }
 

@@ -1,8 +1,7 @@
 'use client';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Copy, Check, Play, ExternalLink } from 'lucide-react';
 import { CodeTab } from '@/types';
-import { cn } from '@/lib/utils';
 
 interface CodeBlockProps {
   tabs: CodeTab[];
@@ -45,12 +44,11 @@ function getRunnerName(label: string): string {
   return label === 'Python' ? 'Python Tutor' : 'OneCompiler';
 }
 
-// For non-Python languages, warn the user they'll need to paste the code
 function getRunnerTooltip(label: string): string {
   if (label === 'Python') {
-    return 'Opens Python Tutor with this code pre-loaded. Step through execution line by line.';
+    return 'Opens Python Tutor with this code pre-loaded and copied to your clipboard.';
   }
-  return `Opens OneCompiler (${label}). Copy the code above and paste it there to run.`;
+  return `Copies this ${label} code, then opens OneCompiler. Paste it into the editor if needed.`;
 }
 
 // ─── Component ─────────────────────────────────────────────────────────────────
@@ -74,7 +72,14 @@ export default function CodeBlock({ tabs }: CodeBlockProps) {
     setTimeout(() => setCopied(false), 2000);
   }
 
-  function handleRun() {
+  async function handleRun() {
+    try {
+      await navigator.clipboard.writeText(currentTab.code);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Opening the runner is still useful if clipboard permission is denied.
+    }
     window.open(runnerUrl, '_blank', 'noopener,noreferrer');
   }
 
@@ -82,19 +87,19 @@ export default function CodeBlock({ tabs }: CodeBlockProps) {
     <div style={{
       borderRadius: 16,
       overflow: 'hidden',
-      border: '1px solid rgba(255,255,255,0.08)',
+      border: '1px solid rgba(148,163,184,0.18)',
       marginTop: 4,
       marginBottom: 4,
-      background: '#0d1117',
-      boxShadow: '0 8px 32px rgba(0,0,0,0.28)',
+      background: '#0b111c',
+      boxShadow: '0 8px 26px rgba(0,0,0,0.22)',
     }}>
 
       {/* ── Tab row ──────────────────────────────────────────────────────── */}
       <div style={{
         display: 'flex',
         alignItems: 'center',
-        background: '#161b22',
-        borderBottom: '1px solid rgba(255,255,255,0.07)',
+        background: '#151d2a',
+        borderBottom: '1px solid rgba(148,163,184,0.15)',
         padding: '0 4px',
         gap: 2,
       }}>
@@ -198,30 +203,32 @@ export default function CodeBlock({ tabs }: CodeBlockProps) {
       {/* ── Code area ────────────────────────────────────────────────────── */}
       <pre style={{
         overflowX: 'auto',
-        padding: '20px 24px',
+        padding: '18px 24px',
         margin: 0,
-        fontSize: 13.5,
-        lineHeight: 1.7,
-        color: '#e6edf3',
+        fontSize: 13.75,
+        lineHeight: 1.72,
+        color: '#f2f6fc',
         fontFamily: "'JetBrains Mono', Consolas, 'Courier New', monospace",
         background: 'transparent',
       }}>
-        <code style={{ fontFamily: 'inherit' }}>{currentTab.code}</code>
+        <code style={{ fontFamily: 'inherit', whiteSpace: 'pre' }}>
+          <HighlightedCode code={currentTab.code} language={currentTab.label} />
+        </code>
       </pre>
 
       {/* ── Platform attribution bar ──────────────────────────────────────── */}
       <div style={{
-        padding: '8px 24px',
-        background: '#161b22',
-        borderTop: '1px solid rgba(255,255,255,0.05)',
+        padding: '7px 24px',
+        background: '#151d2a',
+        borderTop: '1px solid rgba(148,163,184,0.12)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
         fontSize: 11,
-        color: '#484f58',
+        color: '#7f8ea3',
       }}>
         <span>
-          {isPython ? '💡 Code will be pre-loaded in Python Tutor' : '💡 Copy code before opening OneCompiler'}
+          {isPython ? 'Code will be pre-loaded and copied' : 'Code is copied before OneCompiler opens'}
         </span>
         <button
           onClick={handleRun}
@@ -255,3 +262,110 @@ const actionBtnStyle: React.CSSProperties = {
   transition: 'color 200ms, background 200ms',
   border: 'none',
 };
+
+type TokenKind = 'plain' | 'comment' | 'keyword' | 'string' | 'number' | 'function' | 'type';
+
+const TOKEN_COLOR: Record<TokenKind, string> = {
+  plain: '#f2f6fc',
+  comment: '#98a6ba',
+  keyword: '#ff7b72',
+  string: '#9ddcff',
+  number: '#8ecbff',
+  function: '#d2a8ff',
+  type: '#ffb86b',
+};
+
+const KEYWORDS: Record<string, Set<string>> = {
+  Python: new Set([
+    'def', 'return', 'for', 'in', 'range', 'if', 'elif', 'else', 'while', 'from', 'import',
+    'class', 'None', 'True', 'False', 'and', 'or', 'not',
+  ]),
+  JavaScript: new Set([
+    'function', 'const', 'let', 'var', 'return', 'for', 'if', 'else', 'while', 'class',
+    'new', 'true', 'false', 'null', 'undefined',
+  ]),
+  Java: new Set([
+    'public', 'private', 'static', 'class', 'int', 'return', 'for', 'if', 'else', 'while',
+    'new', 'true', 'false', 'void',
+  ]),
+  'C++': new Set([
+    'vector', 'int', 'return', 'for', 'if', 'else', 'while', 'true', 'false', 'auto',
+    'const', 'size_t',
+  ]),
+};
+
+const TYPE_WORDS = new Set(['List', 'Array', 'String', 'Integer', 'vector', 'int', 'boolean', 'bool']);
+
+function HighlightedCode({ code, language }: { code: string; language: string }) {
+  const lines = code.split('\n');
+
+  return (
+    <>
+      {lines.map((line, index) => (
+        <span key={index}>
+          {highlightLine(line, language)}
+          {index < lines.length - 1 ? '\n' : null}
+        </span>
+      ))}
+    </>
+  );
+}
+
+function highlightLine(line: string, language: string): ReactNode[] {
+  const commentStart = findCommentStart(line, language);
+  if (commentStart >= 0) {
+    return [
+      ...highlightCodePart(line.slice(0, commentStart), language, 'code'),
+      token(line.slice(commentStart), 'comment', `comment-${commentStart}`),
+    ];
+  }
+
+  return highlightCodePart(line, language, 'code');
+}
+
+function findCommentStart(line: string, language: string) {
+  if (language === 'Python') return line.indexOf('#');
+  return line.indexOf('//');
+}
+
+function highlightCodePart(text: string, language: string, keyPrefix: string): ReactNode[] {
+  const parts: ReactNode[] = [];
+  const pattern = /("(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|`(?:\\.|[^`\\])*`|\b\d+\b|\b[A-Za-z_]\w*\b)/g;
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+
+  while ((match = pattern.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      parts.push(token(text.slice(lastIndex, match.index), 'plain', `${keyPrefix}-plain-${lastIndex}`));
+    }
+
+    const value = match[0];
+    parts.push(token(value, classifyToken(value, text, match.index, language), `${keyPrefix}-tok-${match.index}`));
+    lastIndex = match.index + value.length;
+  }
+
+  if (lastIndex < text.length) {
+    parts.push(token(text.slice(lastIndex), 'plain', `${keyPrefix}-plain-${lastIndex}`));
+  }
+
+  return parts;
+}
+
+function classifyToken(value: string, source: string, index: number, language: string): TokenKind {
+  if (/^["'`]/.test(value)) return 'string';
+  if (/^\d+$/.test(value)) return 'number';
+  if (KEYWORDS[language]?.has(value)) return 'keyword';
+  if (TYPE_WORDS.has(value)) return 'type';
+
+  const next = source.slice(index + value.length).match(/^\s*\(/);
+  return next ? 'function' : 'plain';
+}
+
+function token(text: string, kind: TokenKind, key: string) {
+  if (!text) return null;
+  return (
+    <span key={key} style={{ color: TOKEN_COLOR[kind] }}>
+      {text}
+    </span>
+  );
+}

@@ -40,8 +40,14 @@ export default function MobileDrawer({ course }: { course: Course }) {
           <X size={20} />
         </button>
 
-        {/* Reuse the same Sidebar component — pass onLinkClick to close on nav */}
-        <Sidebar course={course} onLinkClick={() => setIsOpen(false)} />
+        {/* Reuse the same Sidebar component and close the drawer on navigation. */}
+        <Sidebar
+          course={course}
+          collapsed={false}
+          mobileOpen={true}
+          onToggleCollapse={() => {}}
+          onCloseMobile={() => setIsOpen(false)}
+        />
       </div>
     </div>
   );

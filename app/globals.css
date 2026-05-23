@@ -11,7 +11,12 @@
     --surface:        rgba(255, 255, 255, 0.86);
     --surface-solid:  #ffffff;
     --text:           #172033;
+    --prose:          #263044;
     --muted:          #737d92;
+    --example-bg:     #ffffff;
+    --example-text:   #0f5fb3;
+    --inline-code-bg: rgba(109, 93, 252, 0.07);
+    --inline-code-text: #5748e8;
     --border:         rgba(18, 25, 38, 0.09);
     --primary:        #6d5dfc;
     --primary-2:      #8f6cff;
@@ -31,7 +36,12 @@
     --surface:       rgba(21, 28, 45, 0.82);
     --surface-solid: #151c2d;
     --text:          #f3f6ff;
-    --muted:         #9ca8bf;
+    --prose:         #c6d0e3;
+    --muted:         #a9b4c8;
+    --example-bg:    rgba(8, 13, 24, 0.58);
+    --example-text:  #a8d2ff;
+    --inline-code-bg: rgba(109, 93, 252, 0.13);
+    --inline-code-text: #a699ff;
     --border:        rgba(255, 255, 255, 0.09);
     --shadow:        0 18px 45px rgba(0, 0, 0, 0.30);
     --shadow-soft:   0 10px 25px rgba(0, 0, 0, 0.22);
@@ -141,13 +151,13 @@
 
 /* ─── Prose content ──────────────────────────────────────────────────────── */
 .prose-content code:not(pre code) {
-  background: rgba(109, 93, 252, 0.08);
-  color: var(--primary);
+  background: var(--inline-code-bg);
+  color: var(--inline-code-text);
   font-family: 'JetBrains Mono', monospace;
-  font-size: 0.875em;
-  padding: 2px 7px;
-  border-radius: 6px;
-  border: 1px solid rgba(109, 93, 252, 0.14);
+  font-size: 0.86em;
+  padding: 1px 5px;
+  border-radius: 5px;
+  border: 1px solid rgba(109, 93, 252, 0.10);
 }
 .prose-content strong { font-weight: 700; color: var(--text); }
 

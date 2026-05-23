@@ -5,341 +5,319 @@ const MONO = "'JetBrains Mono', 'Courier New', monospace";
 const SANS = "Inter, ui-sans-serif, sans-serif";
 
 const CSS = `
-  .dt  { fill: var(--text);    }
-  .dm  { fill: var(--muted);   }
-  .dp  { fill: var(--primary); }
-  .da  { fill: var(--accent);  }
-  .dms { stroke: var(--muted); fill: none; stroke-linecap: round; }
-  .dbs { stroke: var(--muted); fill: none; stroke-linecap: round; stroke-dasharray: 7 4; }
+  .dt  { fill: var(--text); }
+  .dm  { fill: var(--muted); }
+  .ds  { stroke: var(--muted); fill: none; stroke-linecap: round; }
+  .dd  { stroke: var(--muted); fill: rgba(127,139,164,0.06); stroke-linecap: round; stroke-dasharray: 7 5; }
 `;
 
-// ─── Pointer box + downward arrow ─────────────────────────────────────────────
+const ORANGE = '#ff5a1f';
+const BLUE = '#0ea5e9';
+
+function ArrowHeadDown({ x, y, color }: { x: number; y: number; color: string }) {
+  return <polygon points={`${x - 5},${y - 8} ${x + 5},${y - 8} ${x},${y}`} fill={color} />;
+}
+
+function ArrowHeadRight({ x, y, color }: { x: number; y: number; color: string }) {
+  return <polygon points={`${x - 8},${y - 5} ${x - 8},${y + 5} ${x},${y}`} fill={color} />;
+}
+
+function ArrowHeadLeft({ x, y, color }: { x: number; y: number; color: string }) {
+  return <polygon points={`${x + 8},${y - 5} ${x + 8},${y + 5} ${x},${y}`} fill={color} />;
+}
 
 function Ptr({
-  cx, y0 = 10, y1, label, primary = true,
+  cx, y = 8, toY, label, color = ORANGE,
 }: {
-  cx: number; y0?: number; y1: number; label: string; primary?: boolean;
+  cx: number;
+  y?: number;
+  toY: number;
+  label: string;
+  color?: string;
 }) {
-  const color = primary ? 'var(--primary)' : 'var(--accent)';
   const short = label.length <= 2;
-  const bw    = short ? 46 : label.length * 11 + 26;
-  const bh    = 34;
+  const width = short ? 25 : label.length * 8 + 18;
+  const height = 22;
 
   return (
     <>
-      <rect x={cx - bw / 2} y={y0} width={bw} height={bh} rx="9" fill={color} />
+      <rect
+        x={cx - width / 2}
+        y={y}
+        width={width}
+        height={height}
+        rx="6"
+        fill="rgba(255,255,255,0.04)"
+        stroke={color}
+        strokeWidth="1.6"
+      />
       <text
-        x={cx} y={y0 + bh - 8}
+        x={cx}
+        y={y + 16}
         textAnchor="middle"
-        fontSize={short ? 17 : 12}
-        fontWeight="900"
-        fill="white"
+        fontSize={short ? 13 : 11}
+        fontWeight="700"
+        fill={color}
         fontFamily={MONO}
       >
         {label}
       </text>
-      {/* Shaft */}
       <line
-        x1={cx} y1={y0 + bh + 3}
-        x2={cx} y2={y1 - 16}
-        stroke={color} strokeWidth="3" strokeLinecap="round"
+        x1={cx}
+        y1={y + height + 3}
+        x2={cx}
+        y2={toY - 8}
+        stroke={color}
+        strokeWidth="2"
+        strokeLinecap="round"
       />
-      {/* Arrowhead */}
-      <polygon
-        points={`${cx - 9},${y1 - 17} ${cx + 9},${y1 - 17} ${cx},${y1}`}
-        fill={color}
-      />
+      <ArrowHeadDown x={cx} y={toY} color={color} />
     </>
   );
 }
 
-// ─── Array renderer ────────────────────────────────────────────────────────────
+interface Cell {
+  x: number;
+  text: string;
+  muted?: boolean;
+}
 
-interface Cell { x: number; txt: string; muted?: boolean; hi?: boolean; }
-
-function Arr({ by, lx, rx, cells }: { by: number; lx: number; rx: number; cells: Cell[] }) {
+function ArrayLine({
+  y,
+  left,
+  right,
+  cells,
+}: {
+  y: number;
+  left: number;
+  right: number;
+  cells: Cell[];
+}) {
   return (
     <>
-      <text x={lx} y={by + 6} fontSize="52" fontWeight="200" textAnchor="middle" fontFamily={MONO} className="dt">[</text>
-      {cells.map((c, i) => (
+      <text x={left} y={y + 5} fontSize="30" fontWeight="300" textAnchor="middle" fontFamily={MONO} className="dt">[</text>
+      {cells.map((cell) => (
         <text
-          key={i}
-          x={c.x} y={by}
-          fontSize={c.muted ? 19 : 32}
-          fontWeight={c.hi ? '800' : '600'}
+          key={`${cell.x}-${cell.text}`}
+          x={cell.x}
+          y={y}
+          fontSize={cell.muted ? 15 : 22}
+          fontWeight="600"
           textAnchor="middle"
           fontFamily={MONO}
-          className={c.muted ? 'dm' : 'dt'}
+          className={cell.muted ? 'dm' : 'dt'}
         >
-          {c.txt}
+          {cell.text}
         </text>
       ))}
-      <text x={rx} y={by + 6} fontSize="52" fontWeight="200" textAnchor="middle" fontFamily={MONO} className="dt">]</text>
+      <text x={right} y={y + 5} fontSize="30" fontWeight="300" textAnchor="middle" fontFamily={MONO} className="dt">]</text>
     </>
   );
 }
 
-// Standard 6-element array used in diagrams 1 + 2
-const STD: Cell[] = [
-  { x: 80,  txt: '···', muted: true },
-  { x: 162, txt: '14' },
-  { x: 244, txt: '5',  hi: true },
-  { x: 326, txt: '5' },
-  { x: 408, txt: '20' },
-  { x: 476, txt: '···', muted: true },
+const STANDARD_CELLS: Cell[] = [
+  { x: 92, text: '...', muted: true },
+  { x: 152, text: '14' },
+  { x: 210, text: '5' },
+  { x: 268, text: '5' },
+  { x: 326, text: '20' },
+  { x: 390, text: '...', muted: true },
 ];
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// 01 — Single Pointer
-// ═══════════════════════════════════════════════════════════════════════════════
 
 export function DiagramSinglePointer() {
   return (
     <svg
-      viewBox="0 0 560 160"
-      style={{ width: '100%', height: 'auto' }}
+      viewBox="0 0 460 96"
+      style={{ width: '100%', height: 'auto', display: 'block' }}
       xmlns="http://www.w3.org/2000/svg"
       aria-label="Array with single pointer i above element 5"
     >
       <style>{CSS}</style>
-      <Ptr cx={244} y1={104} label="i" />
-      <Arr by={140} lx={24} rx={536} cells={STD} />
+      <Ptr cx={210} toY={55} label="i" />
+      <ArrayLine y={78} left={42} right={424} cells={STANDARD_CELLS} />
     </svg>
   );
 }
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// 02 — Two Pointers + Comparison Box
-// ═══════════════════════════════════════════════════════════════════════════════
 
 export function DiagramTwoPointers() {
-  const cells: Cell[] = [
-    { x: 74,  txt: '···', muted: true },
-    { x: 152, txt: '14' },
-    { x: 230, txt: '5',  hi: true },
-    { x: 308, txt: '5',  hi: true },
-    { x: 386, txt: '20' },
-    { x: 452, txt: '···', muted: true },
-  ];
-
   return (
     <svg
-      viewBox="0 0 780 160"
-      style={{ width: '100%', height: 'auto' }}
+      viewBox="0 0 760 118"
+      style={{ width: '100%', height: 'auto', display: 'block' }}
       xmlns="http://www.w3.org/2000/svg"
-      aria-label="Two pointers i and j with comparison decision box"
+      aria-label="Two pointers i and j comparing two array values"
     >
       <style>{CSS}</style>
-      <Ptr cx={230} y1={104} label="i" primary={true} />
-      <Ptr cx={308} y1={104} label="j" primary={false} />
-      <Arr by={140} lx={24} rx={500} cells={cells} />
+      <Ptr cx={226} toY={54} label="i" />
+      <Ptr cx={284} toY={54} label="j" color={BLUE} />
+      <ArrayLine
+        y={78}
+        left={52}
+        right={456}
+        cells={[
+          { x: 96, text: '...', muted: true },
+          { x: 156, text: '14' },
+          { x: 226, text: '5' },
+          { x: 284, text: '5' },
+          { x: 344, text: '20' },
+          { x: 410, text: '...', muted: true },
+        ]}
+      />
 
-      {/* ── Comparison box (dashed) ────────────────────────────────────── */}
-      <rect x="526" y="24" width="236" height="100" rx="12" strokeWidth="1.8" className="dbs" />
-      {/* Text */}
-      <text x="543" y="56"  fontSize="13.5" fontFamily={MONO} className="dt">compare(nums[i],</text>
-      <text x="543" y="74"  fontSize="13.5" fontFamily={MONO} className="dt">{'  '}nums[j])</text>
-      {/* Horizontal divider */}
-      <line x1="543" y1="85" x2="750" y2="85" strokeWidth="1.2" className="dms" />
-      {/* Arrow + label */}
-      <line x1="543" y1="103" x2="566" y2="103" strokeWidth="2.5" stroke="var(--muted)" strokeLinecap="round" />
-      <polygon points="564,100 573,103 564,106" fill="var(--muted)" />
-      <text x="578" y="107" fontSize="12" fontFamily={SANS} className="dm">make decision</text>
+      <rect x="496" y="30" width="224" height="68" rx="11" strokeWidth="1.8" className="dd" />
+      <text x="514" y="55" fontSize="16" fontFamily={MONO} className="dt">compare(nums[i], nums[j])</text>
+      <line x1="514" y1="71" x2="704" y2="71" strokeWidth="1.4" className="ds" />
+      <line x1="514" y1="86" x2="552" y2="86" strokeWidth="2" className="ds" />
+      <polygon points="550,81 562,86 550,91" fill="var(--muted)" />
+      <text x="574" y="91" fontSize="14" fontFamily={SANS} fontWeight="600" className="dm">make decision</text>
     </svg>
   );
 }
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// 03 — Sorted Array with Prediction
-// ═══════════════════════════════════════════════════════════════════════════════
 
 export function DiagramSortedArray() {
   return (
     <svg
-      viewBox="0 0 520 204"
-      style={{ width: '100%', height: 'auto' }}
+      viewBox="0 0 500 148"
+      style={{ width: '100%', height: 'auto', display: 'block' }}
       xmlns="http://www.w3.org/2000/svg"
-      aria-label="Sorted array [1 2 3 4] with pointer i above 2 and prediction annotation"
+      aria-label="Sorted array with pointer i and prediction annotation"
     >
       <style>{CSS}</style>
-      <Ptr cx={204} y1={100} label="i" />
-      <Arr
-        by={134}
-        lx={42}
-        rx={478}
+      <Ptr cx={214} toY={55} label="i" />
+      <ArrayLine
+        y={78}
+        left={72}
+        right={428}
         cells={[
-          { x: 120, txt: '1' },
-          { x: 204, txt: '2', hi: true },
-          { x: 288, txt: '3' },
-          { x: 372, txt: '4' },
+          { x: 146, text: '1' },
+          { x: 214, text: '2' },
+          { x: 282, text: '3' },
+          { x: 350, text: '4' },
         ]}
       />
-      <text x="260" y="158" textAnchor="middle" fontSize="13" fontFamily={SANS} fontWeight="600" className="dm">
+      <line x1="118" y1="98" x2="382" y2="98" strokeWidth="1.4" className="ds" />
+      <text x="250" y="117" textAnchor="middle" fontSize="12" fontFamily={SANS} fontWeight="600" className="dm">
         sorted array
       </text>
-      {/* Prediction pill */}
-      <rect x="20" y="170" width="480" height="28" rx="9" fill="rgba(109,93,252,0.10)" />
-      <text x="260" y="189" textAnchor="middle" fontSize="13" fontFamily={MONO} className="dp">
-        {'if nums[i] == 2  →  nums[i+1] ≥ 2'}
+      <rect x="58" y="126" width="384" height="18" rx="6" fill="rgba(109,93,252,0.10)" />
+      <text x="250" y="140" textAnchor="middle" fontSize="12" fontFamily={MONO} fill="var(--primary)">
+        {'prediction: nums[i] == 2  =>  nums[i+1] >= 2'}
       </text>
     </svg>
   );
 }
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// 04 — Inward Traversal
-// ═══════════════════════════════════════════════════════════════════════════════
 
 export function DiagramInwardTraversal() {
-  const xs  = [62, 134, 206, 278, 350, 422, 494, 566];
-  const els = ['a','b','c','d','e','f','g','h'];
+  const xs = [72, 126, 180, 234, 288, 342, 396, 450];
+  const cells = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'].map((text, i) => ({ x: xs[i], text }));
 
   return (
     <svg
-      viewBox="0 0 640 184"
-      style={{ width: '100%', height: 'auto' }}
+      viewBox="0 0 520 142"
+      style={{ width: '100%', height: 'auto', display: 'block' }}
       xmlns="http://www.w3.org/2000/svg"
-      aria-label="Inward traversal: left and right pointers converge toward center"
+      aria-label="Inward traversal with left and right pointers converging"
     >
       <style>{CSS}</style>
-      <Ptr cx={62}  y1={102} label="left"  primary={true} />
-      <Ptr cx={566} y1={102} label="right" primary={false} />
-      <Arr
-        by={136} lx={20} rx={620}
-        cells={els.map((t, i) => ({ x: xs[i], txt: t, hi: i === 0 || i === 7 }))}
-      />
-      {/* Converging arrows */}
-      <line x1="24"  y1="162" x2="86"  y2="162" strokeWidth="2.5" stroke="var(--primary)" strokeLinecap="round" />
-      <polygon points="84,159 93,162 84,165" fill="var(--primary)" />
-      <line x1="616" y1="162" x2="554" y2="162" strokeWidth="2.5" stroke="var(--accent)" strokeLinecap="round" />
-      <polygon points="556,159 547,162 556,165" fill="var(--accent)" />
-      <text x="320" y="166" textAnchor="middle" fontSize="12" fontFamily={SANS} fontWeight="600" className="dm">
-        ← converging →
-      </text>
+      <Ptr cx={72} toY={62} label="left" />
+      <Ptr cx={450} toY={62} label="right" color={BLUE} />
+      <ArrayLine y={88} left={34} right={492} cells={cells} />
+      <line x1="58" y1="114" x2="224" y2="114" stroke={ORANGE} strokeWidth="1.7" strokeLinecap="round" strokeDasharray="6 5" />
+      <ArrowHeadRight x={224} y={114} color={ORANGE} />
+      <line x1="464" y1="114" x2="300" y2="114" stroke={BLUE} strokeWidth="1.7" strokeLinecap="round" strokeDasharray="6 5" />
+      <ArrowHeadLeft x={300} y={114} color={BLUE} />
     </svg>
   );
 }
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// 05 — Unidirectional Traversal
-// ═══════════════════════════════════════════════════════════════════════════════
 
 export function DiagramUnidirectional() {
-  const xs  = [62, 134, 206, 278, 350, 422, 494, 566];
-  const els = ['a','b','c','d','e','f','g','h'];
+  const xs = [72, 126, 180, 234, 288, 342, 396, 450];
+  const cells = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'].map((text, i) => ({ x: xs[i], text }));
 
   return (
     <svg
-      viewBox="0 0 640 184"
-      style={{ width: '100%', height: 'auto' }}
+      viewBox="0 0 520 142"
+      style={{ width: '100%', height: 'auto', display: 'block' }}
       xmlns="http://www.w3.org/2000/svg"
-      aria-label="Unidirectional traversal: both pointers move in the same direction"
+      aria-label="Unidirectional traversal with both pointers moving right"
     >
       <style>{CSS}</style>
-      <Ptr cx={62}  y1={102} label="left"  primary={true} />
-      <Ptr cx={206} y1={102} label="right" primary={false} />
-      <Arr
-        by={136} lx={20} rx={620}
-        cells={els.map((t, i) => ({ x: xs[i], txt: t, hi: i === 0 || i === 2 }))}
-      />
-      {/* Same-direction arrows */}
-      <line x1="24"  y1="162" x2="86"  y2="162" strokeWidth="2.5" stroke="var(--primary)" strokeLinecap="round" />
-      <polygon points="84,159 93,162 84,165" fill="var(--primary)" />
-      <line x1="162" y1="162" x2="230" y2="162" strokeWidth="2.5" stroke="var(--accent)" strokeLinecap="round" />
-      <polygon points="228,159 237,162 228,165" fill="var(--accent)" />
-      <text x="460" y="166" textAnchor="middle" fontSize="12" fontFamily={SANS} fontWeight="600" className="dm">
-        same direction →
-      </text>
+      <Ptr cx={72} toY={62} label="left" />
+      <Ptr cx={180} toY={62} label="right" color={BLUE} />
+      <ArrayLine y={88} left={34} right={492} cells={cells} />
+      <line x1="58" y1="114" x2="146" y2="114" stroke={ORANGE} strokeWidth="1.7" strokeLinecap="round" strokeDasharray="6 5" />
+      <ArrowHeadRight x={146} y={114} color={ORANGE} />
+      <line x1="168" y1="124" x2="278" y2="124" stroke={BLUE} strokeWidth="1.7" strokeLinecap="round" strokeDasharray="6 5" />
+      <ArrowHeadRight x={278} y={124} color={BLUE} />
     </svg>
   );
 }
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// 06 — Staged Traversal
-// ═══════════════════════════════════════════════════════════════════════════════
 
 export function DiagramStagedTraversal() {
-  const xs  = [80, 166, 252, 338, 424, 510];
-  const els = ['a','b','★','c','d','e'];
+  const xs = [70, 132, 194, 256, 318, 380];
+  const cells = ['a', 'b', '*', 'c', 'd', 'e'].map((text, i) => ({ x: xs[i], text }));
 
   return (
     <svg
-      viewBox="0 0 590 206"
-      style={{ width: '100%', height: 'auto' }}
+      viewBox="0 0 470 162"
+      style={{ width: '100%', height: 'auto', display: 'block' }}
       xmlns="http://www.w3.org/2000/svg"
-      aria-label="Staged traversal: i scans until condition is found, then j activates"
+      aria-label="Staged traversal showing one pointer activating another"
     >
       <style>{CSS}</style>
-      <Ptr cx={252} y1={102} label="i" primary={true} />
-      <Ptr cx={338} y1={102} label="j" primary={false} />
-      <Arr
-        by={136} lx={28} rx={562}
-        cells={els.map((t, i) => ({
-          x: xs[i],
-          txt: t,
-          hi: i === 2 || i === 3,
-          // Make ★ slightly larger via hi
-        }))}
-      />
-      {/* Phase annotation */}
-      <rect x="18" y="156" width="554" height="44" rx="10" fill="rgba(109,93,252,0.08)" />
-      <text x="30" y="174" fontSize="12.5" fontFamily={SANS} fontWeight="800" className="dp">Phase 1:</text>
-      <text x="106" y="174" fontSize="12.5" fontFamily={SANS} className="dm">  i scans the array → finds condition (★)</text>
-      <text x="30" y="193" fontSize="12.5" fontFamily={SANS} fontWeight="800" className="da">Phase 2:</text>
-      <text x="106" y="193" fontSize="12.5" fontFamily={SANS} className="dm">  j activates from that position and continues</text>
+      <Ptr cx={194} toY={62} label="i" />
+      <Ptr cx={256} toY={62} label="j" color={BLUE} />
+      <ArrayLine y={88} left={34} right={432} cells={cells} />
+      <rect x="42" y="112" width="386" height="42" rx="8" fill="rgba(109,93,252,0.08)" />
+      <text x="58" y="130" fontSize="12" fontFamily={SANS} fontWeight="800" fill={ORANGE}>Phase 1:</text>
+      <text x="122" y="130" fontSize="12" fontFamily={SANS} className="dm">i scans until it finds a condition (*)</text>
+      <text x="58" y="147" fontSize="12" fontFamily={SANS} fontWeight="800" fill={BLUE}>Phase 2:</text>
+      <text x="122" y="147" fontSize="12" fontFamily={SANS} className="dm">j starts from there and continues</text>
     </svg>
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// 07 — Chapter Outline (branching tree)
-// ═══════════════════════════════════════════════════════════════════════════════
-
 export function DiagramChapterOutline() {
-  const rootCx = 300;
-  const lineY  = 106;
-  const bY     = 136;
-  const bw     = 166;
-  const bh     = 58;
-
   const branches = [
-    { cx: 90,  line1: 'Inward',          line2: 'Traversal',  acc: false },
-    { cx: 300, line1: 'Unidirectional',  line2: 'Traversal',  acc: true  },
-    { cx: 510, line1: 'Staged',          line2: 'Traversal',  acc: false },
+    { x: 72, label: 'Inward', sub: 'Traversal', color: ORANGE },
+    { x: 246, label: 'Unidirectional', sub: 'Traversal', color: BLUE },
+    { x: 420, label: 'Staged', sub: 'Traversal', color: ORANGE },
   ];
 
   return (
     <svg
-      viewBox="0 0 600 224"
-      style={{ width: '100%', height: 'auto' }}
+      viewBox="0 0 492 186"
+      style={{ width: '100%', height: 'auto', display: 'block' }}
       xmlns="http://www.w3.org/2000/svg"
-      aria-label="Chapter outline: Two Pointers branches into Inward, Unidirectional, and Staged Traversal"
+      aria-label="Two pointers chapter outline branching into three traversal types"
     >
-      <style>{`
-        ${CSS}
-        .node-p { fill: rgba(109,93,252,0.12); stroke: var(--primary); stroke-width: 1.8; }
-        .node-a { fill: rgba(24,199,161,0.12);  stroke: var(--accent);  stroke-width: 1.8; }
-        .sans   { font-family: ${SANS}; }
-      `}</style>
+      <style>{CSS}</style>
+      <rect x="164" y="12" width="164" height="42" rx="11" fill="rgba(109,93,252,0.10)" stroke="var(--primary)" strokeWidth="1.6" />
+      <text x="246" y="31" textAnchor="middle" fontSize="13" fontWeight="800" fontFamily={SANS} fill="var(--primary)">Two Pointers</text>
+      <text x="246" y="47" textAnchor="middle" fontSize="10" fontWeight="600" fontFamily={SANS} className="dm">Chapter 01</text>
 
-      {/* Root */}
-      <rect x={rootCx - 116} y="14" width="232" height="56" rx="14" className="node-p" />
-      <text x={rootCx} y="38"  textAnchor="middle" fontSize="16" fontWeight="800" className="dp sans">Two Pointers</text>
-      <text x={rootCx} y="56"  textAnchor="middle" fontSize="12" fontWeight="600" className="dm sans">Chapter 01</text>
+      <line x1="246" y1="54" x2="246" y2="84" strokeWidth="1.5" className="ds" />
+      <line x1="72" y1="84" x2="420" y2="84" strokeWidth="1.5" className="ds" />
 
-      {/* Stem */}
-      <line x1={rootCx} y1="70" x2={rootCx} y2={lineY} strokeWidth="1.8" className="dms" />
-
-      {/* Horizontal bar */}
-      <line x1={branches[0].cx} y1={lineY} x2={branches[2].cx} y2={lineY} strokeWidth="1.8" className="dms" />
-
-      {/* Branch verticals + boxes */}
-      {branches.map((br) => (
-        <g key={br.cx}>
-          <line x1={br.cx} y1={lineY} x2={br.cx} y2={bY} strokeWidth="1.8" className="dms" />
-          <rect x={br.cx - bw/2} y={bY} width={bw} height={bh} rx="12" className={br.acc ? 'node-a' : 'node-p'} />
-          <text x={br.cx} y={bY + 23} textAnchor="middle" fontSize="13.5" fontWeight="700" className={br.acc ? 'da sans' : 'dp sans'}>{br.line1}</text>
-          <text x={br.cx} y={bY + 42} textAnchor="middle" fontSize="12" fontWeight="600" className="dm sans">{br.line2}</text>
+      {branches.map((branch) => (
+        <g key={branch.label}>
+          <line x1={branch.x} y1="84" x2={branch.x} y2="108" strokeWidth="1.5" className="ds" />
+          <rect
+            x={branch.x - 62}
+            y="108"
+            width="124"
+            height="48"
+            rx="10"
+            fill="rgba(127,139,164,0.06)"
+            stroke={branch.color}
+            strokeWidth="1.6"
+          />
+          <text x={branch.x} y="130" textAnchor="middle" fontSize="11.5" fontWeight="800" fontFamily={SANS} fill={branch.color}>
+            {branch.label}
+          </text>
+          <text x={branch.x} y="146" textAnchor="middle" fontSize="10.5" fontWeight="600" fontFamily={SANS} className="dm">
+            {branch.sub}
+          </text>
         </g>
       ))}
     </svg>
