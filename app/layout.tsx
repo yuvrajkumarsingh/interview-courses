@@ -3,7 +3,7 @@ import './globals.css';
 import { ThemeProvider } from '@/components/providers/ThemeProvider';
 
 export const metadata: Metadata = {
-  title: 'ByteByteGo | Technical Interview Prep',
+  title: 'Interview Courses | Technical Interview Prep',
   description: 'Ace Every Stage of Your Next Technical Interview',
 };
 

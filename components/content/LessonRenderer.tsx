@@ -81,32 +81,31 @@ function Block({ block }: { block: ContentBlock }) {
       );
 
     case 'diagram': {
-        const DiagramComp = DIAGRAMS[block.diagramId ?? ''];
-        if (!DiagramComp) return null;
-        return (
-          <figure style={{
-            margin: '28px auto',
-            maxWidth: 560,          // matches image max-width — keeps diagrams readable
-            padding: '20px',
-            borderRadius: 16,
-            background: 'rgba(109,93,252,0.04)',   // ultra-subtle tinted surface
-            border: '1px solid var(--border)',
-          }}>
-            <DiagramComp />
-            {block.caption && (
-              <figcaption style={{
-                textAlign: 'center',
-                fontSize: 12,
-                color: 'var(--muted)',
-                marginTop: 10,
-                fontStyle: 'italic',
-                fontFamily: 'Inter, sans-serif',
-              }}>
-                {block.caption}
-              </figcaption>
-            )}
-          </figure>
-        );
+      const DiagramComp = DIAGRAMS[block.diagramId ?? ''];
+      if (!DiagramComp) return null;
+      return (
+        /*
+          No maxWidth constraint — let the diagram fill the glass card width.
+          The SVG viewBox handles internal proportions; the wider it renders,
+          the larger and more readable all text + arrows become automatically.
+          No tinted background — diagrams sit directly on the card surface.
+        */
+        <figure style={{ margin: '28px 0', padding: '4px 0' }}>
+          <DiagramComp />
+          {block.caption && (
+            <figcaption style={{
+              textAlign: 'center',
+              fontSize: 12,
+              color: 'var(--muted)',
+              marginTop: 10,
+              fontStyle: 'italic',
+              fontFamily: 'Inter, sans-serif',
+            }}>
+              {block.caption}
+            </figcaption>
+          )}
+        </figure>
+      );
     }
     
     case 'callout': {

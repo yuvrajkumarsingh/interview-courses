@@ -63,7 +63,7 @@ export default function Sidebar({
         {/* Gradient logo mark */}
         <Link
           href="/"
-          aria-label="ByteByteGo home"
+          aria-label="Interview Courses home"
           style={{
             width: 44, height: 44,
             borderRadius: 15,
@@ -77,7 +77,7 @@ export default function Sidebar({
             flexShrink: 0,
           }}
         >
-          B
+          IC
         </Link>
 
         {/* Brand text — hidden when collapsed */}
@@ -88,7 +88,7 @@ export default function Sidebar({
               letterSpacing: '-0.03em', color: 'var(--text)',
               whiteSpace: 'nowrap',
             }}>
-              ByteByteGo
+              Interview Courses
             </div>
             <div style={{
               color: 'var(--muted)', fontSize: 12, fontWeight: 600,

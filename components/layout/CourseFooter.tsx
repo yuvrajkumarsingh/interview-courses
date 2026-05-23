@@ -3,11 +3,11 @@ import Link from 'next/link';
 const COLS = [
   {
     heading: 'Partner With Us',
-    links: ['Teach on ByteByteGo', 'Be an Affiliate', 'Become a Contributor'],
+    links: ['Teach on Interview Courses', 'Be an Affiliate', 'Become a Contributor'],
   },
   {
     heading: 'Support',
-    links: ['hi@bytebytego.com', 'Report a Bug'],
+    links: ['hi@interview-courses.com', 'Report a Bug'],
   },
   {
     heading: 'Company & Legal',
@@ -63,7 +63,7 @@ export default function CourseFooter() {
         textAlign: 'center', fontSize: 12,
         color: 'var(--muted)', paddingBottom: 24,
       }}>
-        Copyright ©2022–2026 ByteByteGo Inc. All rights reserved.
+        Copyright ©2022–2026 Interview Courses Inc. All rights reserved.
       </p>
     </footer>
   );
